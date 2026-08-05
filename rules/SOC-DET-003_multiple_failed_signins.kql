@@ -1,0 +1,11 @@
+// METADATA-START
+// id: SOC-DET-003 | name: multiple_failed_signins | severity: Medium
+// mitre: T1110 | nist: DE.CM-7 | iso27001: A.8.16 | soc2: CC7.2
+// data_source: Entra ID | table: SigninLogs
+// METADATA-END
+
+SigninLogs
+| where ResultType != 0
+| summarize FailedAttempts=count()
+    by UserPrincipalName, IPAddress, bin(TimeGenerated, 15m)
+| where FailedAttempts >= 10

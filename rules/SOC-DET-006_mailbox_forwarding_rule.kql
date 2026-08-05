@@ -1,0 +1,18 @@
+// METADATA-START
+// id: SOC-DET-006 | name: mailbox_forwarding_rule | severity: High
+// mitre: T1098 | nist: DE.CM-7 | iso27001: A.8.16 | soc2: CC7.2
+// data_source: Microsoft 365 | table: OfficeActivity
+// METADATA-END
+
+OfficeActivity
+| where Operation has_any (
+    "New-InboxRule",
+    "Set-InboxRule"
+)
+| where Parameters has_any (
+    "ForwardTo",
+    "RedirectTo",
+    "ForwardAsAttachmentTo"
+)
+| project TimeGenerated, UserId,
+          Operation, Parameters

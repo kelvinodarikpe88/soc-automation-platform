@@ -1,0 +1,15 @@
+// METADATA-START
+// id: SOC-DET-007 | name: azure_resource_change | severity: Medium
+// mitre: T1098 | nist: DE.CM-7 | iso27001: A.8.16 | soc2: CC7.2
+// data_source: Azure | table: AzureActivity
+// METADATA-END
+
+AzureActivity
+| where ActivityStatusValue == "Succeeded"
+| where OperationNameValue has_any (
+    "write",
+    "delete",
+    "action"
+)
+| project TimeGenerated, Caller,
+          OperationNameValue, ResourceGroup, Resource

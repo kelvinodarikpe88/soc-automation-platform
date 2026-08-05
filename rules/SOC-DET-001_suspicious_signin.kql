@@ -1,0 +1,10 @@
+// METADATA-START
+// id: SOC-DET-001 | name: suspicious_signin | severity: High
+// mitre: T1078 | nist: DE.CM-7 | iso27001: A.8.16 | soc2: CC7.2
+// data_source: Entra ID | table: SigninLogs
+// METADATA-END
+
+SigninLogs
+| where ResultType != 0
+| project TimeGenerated, UserPrincipalName, IPAddress,
+          AppDisplayName, ResultDescription

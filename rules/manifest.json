@@ -1,0 +1,112 @@
+[
+  {
+    "id": "SOC-DET-001",
+    "name": "suspicious_signin",
+    "severity": "High",
+    "tactics": [
+      "T1078"
+    ],
+    "query": "SigninLogs\n| where ResultType != 0\n| project TimeGenerated, UserPrincipalName, IPAddress,\n          AppDisplayName, ResultDescription",
+    "table": "SigninLogs",
+    "source": "Entra ID"
+  },
+  {
+    "id": "SOC-DET-002",
+    "name": "impossible_travel",
+    "severity": "High",
+    "tactics": [
+      "T1078"
+    ],
+    "query": "SigninLogs\n| where ResultType == 0\n| summarize\n    FirstSeen=min(TimeGenerated),\n    LastSeen=max(TimeGenerated),\n    Locations=make_set(Location)\n    by UserPrincipalName, bin(TimeGenerated, 1h)\n| where array_length(Locations) > 1",
+    "table": "SigninLogs",
+    "source": "Entra ID"
+  },
+  {
+    "id": "SOC-DET-003",
+    "name": "multiple_failed_signins",
+    "severity": "Medium",
+    "tactics": [
+      "T1110"
+    ],
+    "query": "SigninLogs\n| where ResultType != 0\n| summarize FailedAttempts=count()\n    by UserPrincipalName, IPAddress, bin(TimeGenerated, 15m)\n| where FailedAttempts >= 10",
+    "table": "SigninLogs",
+    "source": "Entra ID"
+  },
+  {
+    "id": "SOC-DET-004",
+    "name": "privileged_role_assignment",
+    "severity": "High",
+    "tactics": [
+      "T1098"
+    ],
+    "query": "AuditLogs\n| where OperationName has_any (\n    \"Add member to role\",\n    \"Add eligible member to role\",\n    \"Add permanent member to role\"\n)\n| project TimeGenerated, InitiatedBy,\n          TargetResources, OperationName",
+    "table": "AuditLogs",
+    "source": "Entra ID"
+  },
+  {
+    "id": "SOC-DET-005",
+    "name": "sensitive_file_access",
+    "severity": "Medium",
+    "tactics": [
+      "T1530"
+    ],
+    "query": "CloudAppEvents\n| where ActionType has_any (\n    \"FileDownloaded\",\n    \"FileAccessed\",\n    \"FileUploaded\"\n)\n| where ObjectName has_any (\n    \"password\",\n    \"credential\",\n    \"secret\",\n    \"confidential\"\n)\n| project TimeGenerated, AccountDisplayName,\n          ActionType, ObjectName",
+    "table": "CloudAppEvents",
+    "source": "Microsoft Defender for Cloud Apps"
+  },
+  {
+    "id": "SOC-DET-006",
+    "name": "mailbox_forwarding_rule",
+    "severity": "High",
+    "tactics": [
+      "T1098"
+    ],
+    "query": "OfficeActivity\n| where Operation has_any (\n    \"New-InboxRule\",\n    \"Set-InboxRule\"\n)\n| where Parameters has_any (\n    \"ForwardTo\",\n    \"RedirectTo\",\n    \"ForwardAsAttachmentTo\"\n)\n| project TimeGenerated, UserId,\n          Operation, Parameters",
+    "table": "OfficeActivity",
+    "source": "Microsoft 365"
+  },
+  {
+    "id": "SOC-DET-007",
+    "name": "azure_resource_change",
+    "severity": "Medium",
+    "tactics": [
+      "T1098"
+    ],
+    "query": "AzureActivity\n| where ActivityStatusValue == \"Succeeded\"\n| where OperationNameValue has_any (\n    \"write\",\n    \"delete\",\n    \"action\"\n)\n| project TimeGenerated, Caller,\n          OperationNameValue, ResourceGroup, Resource",
+    "table": "AzureActivity",
+    "source": "Azure"
+  },
+  {
+    "id": "SOC-DET-008",
+    "name": "defender_high_severity_alert",
+    "severity": "High",
+    "tactics": [
+      "T1059"
+    ],
+    "query": "AlertInfo\n| where Severity in (\"High\", \"Critical\")\n| project Timestamp, AlertId,\n          Title, Severity, Category",
+    "table": "AlertInfo",
+    "source": "Microsoft Defender XDR"
+  },
+  {
+    "id": "SOC-DET-009",
+    "name": "suspicious_dns_query",
+    "severity": "Medium",
+    "tactics": [
+      "T1071"
+    ],
+    "query": "DnsEvents\n| where QueryName has_any (\n    \".xyz\",\n    \".top\",\n    \".click\",\n    \".zip\",\n    \".mov\"\n)\n| project TimeGenerated, Computer,\n          ClientIP, Name, QueryType",
+    "table": "DnsEvents",
+    "source": "DNS"
+  },
+  {
+    "id": "SOC-DET-010",
+    "name": "sensitive_label_access",
+    "severity": "Medium",
+    "tactics": [
+      "T1530"
+    ],
+    "query": "CloudAppEvents\n| where ActionType has_any (\n    \"FileDownloaded\",\n    \"FileAccessed\",\n    \"FileUploaded\"\n)\n| where SensitivityLabel contains \"Confidential\"\n| project TimeGenerated,\n          AccountDisplayName,\n          ActionType,\n          ObjectName,\n          SensitivityLabel",
+    "table": "CloudAppEvents",
+    "source": "Microsoft 365"
+  }
+]

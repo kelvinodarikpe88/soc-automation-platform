@@ -1,0 +1,20 @@
+// METADATA-START
+// id: SOC-DET-005 | name: sensitive_file_access | severity: Medium
+// mitre: T1530 | nist: DE.CM-7 | iso27001: A.8.16 | soc2: CC7.2
+// data_source: Microsoft Defender for Cloud Apps | table: CloudAppEvents
+// METADATA-END
+
+CloudAppEvents
+| where ActionType has_any (
+    "FileDownloaded",
+    "FileAccessed",
+    "FileUploaded"
+)
+| where ObjectName has_any (
+    "password",
+    "credential",
+    "secret",
+    "confidential"
+)
+| project TimeGenerated, AccountDisplayName,
+          ActionType, ObjectName

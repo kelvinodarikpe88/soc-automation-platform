@@ -1,0 +1,14 @@
+// METADATA-START
+// id: SOC-DET-004 | name: privileged_role_assignment | severity: High
+// mitre: T1098 | nist: DE.CM-7 | iso27001: A.8.16 | soc2: CC7.2
+// data_source: Entra ID | table: AuditLogs
+// METADATA-END
+
+AuditLogs
+| where OperationName has_any (
+    "Add member to role",
+    "Add eligible member to role",
+    "Add permanent member to role"
+)
+| project TimeGenerated, InitiatedBy,
+          TargetResources, OperationName

@@ -1,0 +1,10 @@
+// METADATA-START
+// id: SOC-DET-008 | name: defender_high_severity_alert | severity: High
+// mitre: T1059 | nist: DE.CM-7 | iso27001: A.8.16 | soc2: CC7.2
+// data_source: Microsoft Defender XDR | table: AlertInfo
+// METADATA-END
+
+AlertInfo
+| where Severity in ("High", "Critical")
+| project Timestamp, AlertId,
+          Title, Severity, Category

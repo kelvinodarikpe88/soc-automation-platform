@@ -1,0 +1,18 @@
+// METADATA-START
+// id: SOC-DET-010 | name: sensitive_label_access | severity: Medium
+// mitre: T1530 | nist: DE.CM-7 | iso27001: A.8.16 | soc2: CC7.2
+// data_source: Microsoft 365 | table: CloudAppEvents
+// METADATA-END
+
+CloudAppEvents
+| where ActionType has_any (
+    "FileDownloaded",
+    "FileAccessed",
+    "FileUploaded"
+)
+| where SensitivityLabel contains "Confidential"
+| project TimeGenerated,
+          AccountDisplayName,
+          ActionType,
+          ObjectName,
+          SensitivityLabel

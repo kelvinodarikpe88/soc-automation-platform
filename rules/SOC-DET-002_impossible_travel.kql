@@ -1,0 +1,14 @@
+// METADATA-START
+// id: SOC-DET-002 | name: impossible_travel | severity: High
+// mitre: T1078 | nist: DE.CM-7 | iso27001: A.8.16 | soc2: CC7.2
+// data_source: Entra ID | table: SigninLogs
+// METADATA-END
+
+SigninLogs
+| where ResultType == 0
+| summarize
+    FirstSeen=min(TimeGenerated),
+    LastSeen=max(TimeGenerated),
+    Locations=make_set(Location)
+    by UserPrincipalName, bin(TimeGenerated, 1h)
+| where array_length(Locations) > 1
