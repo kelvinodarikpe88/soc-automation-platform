@@ -29,3 +29,16 @@ evidence/*.tmp
 # IDE
 .vscode/
 .idea/
+
+# Google SecOps / GCP credentials
+chronicle-sa.json
+*.json.key
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# macOS
+.DS_Store

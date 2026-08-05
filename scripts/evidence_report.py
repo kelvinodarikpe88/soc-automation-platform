@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+"""Map detection rules to SOC 2, ISO 27001 and NIS2 controls."""
+
 import argparse
 import datetime
 import json
@@ -9,7 +11,6 @@ from pathlib import Path
 CONTROL_MAP = {
     "soc2:CC6.1": [
         "admin_added",
-        "privileged_role",
         "guest_added",
     ],
     "soc2:CC7.2": [
@@ -25,7 +26,6 @@ CONTROL_MAP = {
         "crypto",
         "bulk_download",
         "external_sharing",
-        "sync",
     ],
     "soc2:CC7.3": [
         "account_reenabled",
@@ -63,75 +63,39 @@ CONTROL_MAP = {
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate compliance evidence from rules manifest."
-    )
+    parser = argparse.ArgumentParser()
 
     parser.add_argument(
         "--rules",
         required=True,
-        help="Path to rules/manifest.json",
     )
 
     parser.add_argument(
         "--out",
         default="evidence/controls.json",
-        help="Output evidence JSON path",
     )
 
     args = parser.parse_args()
 
-    manifest_path = Path(args.rules)
-    out = Path(args.out)
-
-    if not manifest_path.exists():
-        raise SystemExit(
-            f"Manifest not found: {manifest_path}"
+    manifest = json.loads(
+        Path(args.rules).read_text(
+            encoding="utf-8"
         )
-
-    data = json.loads(
-        manifest_path.read_text(encoding="utf-8")
     )
 
-    if isinstance(data, dict):
-        rules = data.get("rules", [])
-    elif isinstance(data, list):
-        rules = data
-    else:
-        raise SystemExit(
-            "Invalid manifest format."
-        )
-
-    if not isinstance(rules, list):
-        raise SystemExit(
-            "Manifest 'rules' field must be a list."
-        )
+    rules = manifest["rules"]
 
     coverage = {}
 
     for control, keywords in CONTROL_MAP.items():
-        hits = []
-
-        for rule in rules:
-            rule_id = str(rule.get("id", ""))
-            name = str(
-                rule.get(
-                    "name",
-                    rule.get("display_name", ""),
-                )
-            )
-
-            searchable = (
-                f"{rule_id} {name}"
-            ).lower()
-
+        hits = [
+            f"{rule['id']}_{rule['name']}"
+            for rule in rules
             if any(
-                keyword.lower() in searchable
+                keyword in rule["name"]
                 for keyword in keywords
-            ):
-                hits.append(
-                    f"{rule_id}_{name}"
-                )
+            )
+        ]
 
         coverage[control] = {
             "rule_count": len(hits),
@@ -156,16 +120,17 @@ def main():
         ],
     }
 
-    out.parent.mkdir(
+    output = Path(args.out)
+    output.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    out.write_text(
+    output.write_text(
         json.dumps(
             report,
             indent=2,
-        ),
+        ) + "\n",
         encoding="utf-8",
     )
 
@@ -176,8 +141,7 @@ def main():
     )
 
     print(
-        f"Coverage: {covered}/"
-        f"{len(coverage)} controls"
+        f"Coverage: {covered}/{len(coverage)} controls"
     )
 
     if report["gaps"]:

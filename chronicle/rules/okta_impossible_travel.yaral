@@ -1,7 +1,7 @@
 rule okta_impossible_travel {
   meta:
     author = "Kelvin Odarikpe"
-    description = "Success logins from 2 countries within 1h"
+    description = "Successful logins from 2 countries within 1h"
     severity = "HIGH"
     mitre_attack_technique = "T1078"
 
