@@ -1,3 +1,11 @@
 
 # Local connector helper
 connectors/enable_connectors.py
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# macOS
+.DS_Store
