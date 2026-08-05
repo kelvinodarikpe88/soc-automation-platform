@@ -1,0 +1,17 @@
+// METADATA-START
+// id: SOC-DET-001
+// name: Entra ID Failed Sign-ins
+// severity: Medium
+// tactics: Credential Access
+// techniques: T1110
+// METADATA-END
+
+SigninLogs
+| where ResultType != "0"
+| summarize
+    FailedAttempts = count(),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
+    by UserPrincipalName, IPAddress
+| where FailedAttempts >= 5
+| order by FailedAttempts desc
