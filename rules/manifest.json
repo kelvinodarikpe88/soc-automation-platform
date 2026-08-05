@@ -1,112 +1,706 @@
-[
-  {
-    "id": "SOC-DET-001",
-    "name": "suspicious_signin",
-    "severity": "High",
-    "tactics": [
-      "T1078"
-    ],
-    "query": "SigninLogs\n| where ResultType != 0\n| project TimeGenerated, UserPrincipalName, IPAddress,\n          AppDisplayName, ResultDescription",
-    "table": "SigninLogs",
-    "source": "Entra ID"
-  },
-  {
-    "id": "SOC-DET-002",
-    "name": "impossible_travel",
-    "severity": "High",
-    "tactics": [
-      "T1078"
-    ],
-    "query": "SigninLogs\n| where ResultType == 0\n| summarize\n    FirstSeen=min(TimeGenerated),\n    LastSeen=max(TimeGenerated),\n    Locations=make_set(Location)\n    by UserPrincipalName, bin(TimeGenerated, 1h)\n| where array_length(Locations) > 1",
-    "table": "SigninLogs",
-    "source": "Entra ID"
-  },
-  {
-    "id": "SOC-DET-003",
-    "name": "multiple_failed_signins",
-    "severity": "Medium",
-    "tactics": [
-      "T1110"
-    ],
-    "query": "SigninLogs\n| where ResultType != 0\n| summarize FailedAttempts=count()\n    by UserPrincipalName, IPAddress, bin(TimeGenerated, 15m)\n| where FailedAttempts >= 10",
-    "table": "SigninLogs",
-    "source": "Entra ID"
-  },
-  {
-    "id": "SOC-DET-004",
-    "name": "privileged_role_assignment",
-    "severity": "High",
-    "tactics": [
-      "T1098"
-    ],
-    "query": "AuditLogs\n| where OperationName has_any (\n    \"Add member to role\",\n    \"Add eligible member to role\",\n    \"Add permanent member to role\"\n)\n| project TimeGenerated, InitiatedBy,\n          TargetResources, OperationName",
-    "table": "AuditLogs",
-    "source": "Entra ID"
-  },
-  {
-    "id": "SOC-DET-005",
-    "name": "sensitive_file_access",
-    "severity": "Medium",
-    "tactics": [
-      "T1530"
-    ],
-    "query": "CloudAppEvents\n| where ActionType has_any (\n    \"FileDownloaded\",\n    \"FileAccessed\",\n    \"FileUploaded\"\n)\n| where ObjectName has_any (\n    \"password\",\n    \"credential\",\n    \"secret\",\n    \"confidential\"\n)\n| project TimeGenerated, AccountDisplayName,\n          ActionType, ObjectName",
-    "table": "CloudAppEvents",
-    "source": "Microsoft Defender for Cloud Apps"
-  },
-  {
-    "id": "SOC-DET-006",
-    "name": "mailbox_forwarding_rule",
-    "severity": "High",
-    "tactics": [
-      "T1098"
-    ],
-    "query": "OfficeActivity\n| where Operation has_any (\n    \"New-InboxRule\",\n    \"Set-InboxRule\"\n)\n| where Parameters has_any (\n    \"ForwardTo\",\n    \"RedirectTo\",\n    \"ForwardAsAttachmentTo\"\n)\n| project TimeGenerated, UserId,\n          Operation, Parameters",
-    "table": "OfficeActivity",
-    "source": "Microsoft 365"
-  },
-  {
-    "id": "SOC-DET-007",
-    "name": "azure_resource_change",
-    "severity": "Medium",
-    "tactics": [
-      "T1098"
-    ],
-    "query": "AzureActivity\n| where ActivityStatusValue == \"Succeeded\"\n| where OperationNameValue has_any (\n    \"write\",\n    \"delete\",\n    \"action\"\n)\n| project TimeGenerated, Caller,\n          OperationNameValue, ResourceGroup, Resource",
-    "table": "AzureActivity",
-    "source": "Azure"
-  },
-  {
-    "id": "SOC-DET-008",
-    "name": "defender_high_severity_alert",
-    "severity": "High",
-    "tactics": [
-      "T1059"
-    ],
-    "query": "AlertInfo\n| where Severity in (\"High\", \"Critical\")\n| project Timestamp, AlertId,\n          Title, Severity, Category",
-    "table": "AlertInfo",
-    "source": "Microsoft Defender XDR"
-  },
-  {
-    "id": "SOC-DET-009",
-    "name": "suspicious_dns_query",
-    "severity": "Medium",
-    "tactics": [
-      "T1071"
-    ],
-    "query": "DnsEvents\n| where QueryName has_any (\n    \".xyz\",\n    \".top\",\n    \".click\",\n    \".zip\",\n    \".mov\"\n)\n| project TimeGenerated, Computer,\n          ClientIP, Name, QueryType",
-    "table": "DnsEvents",
-    "source": "DNS"
-  },
-  {
-    "id": "SOC-DET-010",
-    "name": "sensitive_label_access",
-    "severity": "Medium",
-    "tactics": [
-      "T1530"
-    ],
-    "query": "CloudAppEvents\n| where ActionType has_any (\n    \"FileDownloaded\",\n    \"FileAccessed\",\n    \"FileUploaded\"\n)\n| where SensitivityLabel contains \"Confidential\"\n| project TimeGenerated,\n          AccountDisplayName,\n          ActionType,\n          ObjectName,\n          SensitivityLabel",
-    "table": "CloudAppEvents",
-    "source": "Microsoft 365"
-  }
-]
+{
+  "generator": "scripts/generate_50_rules.py",
+  "count": 50,
+  "rules": [
+    {
+      "id": "SOC-DET-001",
+      "name": "impossible_travel",
+      "display_name": "Impossible travel sign-in",
+      "severity": "high",
+      "mitre": "T1078",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1078"
+      ],
+      "file": "SOC-DET-001_impossible_travel.kql"
+    },
+    {
+      "id": "SOC-DET-002",
+      "name": "bruteforce",
+      "display_name": "Repeated failed sign-ins",
+      "severity": "medium",
+      "mitre": "T1110",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1110"
+      ],
+      "file": "SOC-DET-002_bruteforce.kql"
+    },
+    {
+      "id": "SOC-DET-003",
+      "name": "password_spray",
+      "display_name": "Password spray detection",
+      "severity": "high",
+      "mitre": "T1110.003",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1110.003"
+      ],
+      "file": "SOC-DET-003_password_spray.kql"
+    },
+    {
+      "id": "SOC-DET-004",
+      "name": "risky_signin",
+      "display_name": "Risky Entra sign-in",
+      "severity": "high",
+      "mitre": "T1078",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1078"
+      ],
+      "file": "SOC-DET-004_risky_signin.kql"
+    },
+    {
+      "id": "SOC-DET-005",
+      "name": "guest_added",
+      "display_name": "External guest account added",
+      "severity": "medium",
+      "mitre": "T1136",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1136"
+      ],
+      "file": "SOC-DET-005_guest_added.kql"
+    },
+    {
+      "id": "SOC-DET-006",
+      "name": "admin_added",
+      "display_name": "Privileged account added",
+      "severity": "high",
+      "mitre": "T1098",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1098"
+      ],
+      "file": "SOC-DET-006_admin_added.kql"
+    },
+    {
+      "id": "SOC-DET-007",
+      "name": "account_reenabled",
+      "display_name": "Disabled account re-enabled",
+      "severity": "medium",
+      "mitre": "T1098",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1098"
+      ],
+      "file": "SOC-DET-007_account_reenabled.kql"
+    },
+    {
+      "id": "SOC-DET-008",
+      "name": "mailbox_forwarding",
+      "display_name": "Mailbox forwarding rule created",
+      "severity": "high",
+      "mitre": "T1114.003",
+      "tactics": [
+        "M365"
+      ],
+      "techniques": [
+        "T1114.003"
+      ],
+      "file": "SOC-DET-008_mailbox_forwarding.kql"
+    },
+    {
+      "id": "SOC-DET-009",
+      "name": "bulk_download",
+      "display_name": "Bulk SharePoint download",
+      "severity": "medium",
+      "mitre": "T1213",
+      "tactics": [
+        "M365"
+      ],
+      "techniques": [
+        "T1213"
+      ],
+      "file": "SOC-DET-009_bulk_download.kql"
+    },
+    {
+      "id": "SOC-DET-010",
+      "name": "external_sharing",
+      "display_name": "External SharePoint sharing",
+      "severity": "medium",
+      "mitre": "T1567",
+      "tactics": [
+        "M365"
+      ],
+      "techniques": [
+        "T1567"
+      ],
+      "file": "SOC-DET-010_external_sharing.kql"
+    },
+    {
+      "id": "SOC-DET-011",
+      "name": "token_replay",
+      "display_name": "Suspicious token replay",
+      "severity": "high",
+      "mitre": "T1550.001",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1550.001"
+      ],
+      "file": "SOC-DET-011_token_replay.kql"
+    },
+    {
+      "id": "SOC-DET-012",
+      "name": "credential_stuffing",
+      "display_name": "Credential stuffing pattern",
+      "severity": "high",
+      "mitre": "T1110.004",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1110.004"
+      ],
+      "file": "SOC-DET-012_credential_stuffing.kql"
+    },
+    {
+      "id": "SOC-DET-013",
+      "name": "root_account",
+      "display_name": "Cloud root account activity",
+      "severity": "critical",
+      "mitre": "T1078",
+      "tactics": [
+        "Cloud"
+      ],
+      "techniques": [
+        "T1078"
+      ],
+      "file": "SOC-DET-013_root_account.kql"
+    },
+    {
+      "id": "SOC-DET-014",
+      "name": "iam_escalation",
+      "display_name": "IAM privilege escalation",
+      "severity": "high",
+      "mitre": "T1098",
+      "tactics": [
+        "Cloud"
+      ],
+      "techniques": [
+        "T1098"
+      ],
+      "file": "SOC-DET-014_iam_escalation.kql"
+    },
+    {
+      "id": "SOC-DET-015",
+      "name": "known_exploited",
+      "display_name": "Known exploited vulnerability activity",
+      "severity": "high",
+      "mitre": "T1190",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1190"
+      ],
+      "file": "SOC-DET-015_known_exploited.kql"
+    },
+    {
+      "id": "SOC-DET-016",
+      "name": "vulnerability",
+      "display_name": "Critical vulnerability exposure",
+      "severity": "high",
+      "mitre": "T1190",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1190"
+      ],
+      "file": "SOC-DET-016_vulnerability.kql"
+    },
+    {
+      "id": "SOC-DET-017",
+      "name": "dns_tunneling",
+      "display_name": "Potential DNS tunneling",
+      "severity": "high",
+      "mitre": "T1071.004",
+      "tactics": [
+        "Network"
+      ],
+      "techniques": [
+        "T1071.004"
+      ],
+      "file": "SOC-DET-017_dns_tunneling.kql"
+    },
+    {
+      "id": "SOC-DET-018",
+      "name": "beacon",
+      "display_name": "Periodic command and control beacon",
+      "severity": "high",
+      "mitre": "T1071",
+      "tactics": [
+        "Network"
+      ],
+      "techniques": [
+        "T1071"
+      ],
+      "file": "SOC-DET-018_beacon.kql"
+    },
+    {
+      "id": "SOC-DET-019",
+      "name": "port_scan",
+      "display_name": "Network port scanning",
+      "severity": "medium",
+      "mitre": "T1046",
+      "tactics": [
+        "Network"
+      ],
+      "techniques": [
+        "T1046"
+      ],
+      "file": "SOC-DET-019_port_scan.kql"
+    },
+    {
+      "id": "SOC-DET-020",
+      "name": "traffic_to_threat_intel",
+      "display_name": "Traffic to threat intelligence IOC",
+      "severity": "high",
+      "mitre": "T1071",
+      "tactics": [
+        "Network"
+      ],
+      "techniques": [
+        "T1071"
+      ],
+      "file": "SOC-DET-020_traffic_to_threat_intel.kql"
+    },
+    {
+      "id": "SOC-DET-021",
+      "name": "crypto",
+      "display_name": "Cryptocurrency mining activity",
+      "severity": "high",
+      "mitre": "T1496",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1496"
+      ],
+      "file": "SOC-DET-021_crypto.kql"
+    },
+    {
+      "id": "SOC-DET-022",
+      "name": "asr",
+      "display_name": "Attack Surface Reduction event",
+      "severity": "medium",
+      "mitre": "T1562.001",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1562.001"
+      ],
+      "file": "SOC-DET-022_asr.kql"
+    },
+    {
+      "id": "SOC-DET-023",
+      "name": "tamper",
+      "display_name": "Security control tampering",
+      "severity": "high",
+      "mitre": "T1562",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1562"
+      ],
+      "file": "SOC-DET-023_tamper.kql"
+    },
+    {
+      "id": "SOC-DET-024",
+      "name": "powershell",
+      "display_name": "Suspicious PowerShell execution",
+      "severity": "high",
+      "mitre": "T1059.001",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1059.001"
+      ],
+      "file": "SOC-DET-024_powershell.kql"
+    },
+    {
+      "id": "SOC-DET-025",
+      "name": "encoded_command",
+      "display_name": "Encoded PowerShell command",
+      "severity": "high",
+      "mitre": "T1059.001",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1059.001"
+      ],
+      "file": "SOC-DET-025_encoded_command.kql"
+    },
+    {
+      "id": "SOC-DET-026",
+      "name": "credential_dump",
+      "display_name": "Credential dumping behavior",
+      "severity": "critical",
+      "mitre": "T1003",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1003"
+      ],
+      "file": "SOC-DET-026_credential_dump.kql"
+    },
+    {
+      "id": "SOC-DET-027",
+      "name": "lsass_access",
+      "display_name": "Suspicious LSASS access",
+      "severity": "critical",
+      "mitre": "T1003.001",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1003.001"
+      ],
+      "file": "SOC-DET-027_lsass_access.kql"
+    },
+    {
+      "id": "SOC-DET-028",
+      "name": "rundll32",
+      "display_name": "Suspicious rundll32 execution",
+      "severity": "high",
+      "mitre": "T1218.011",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1218.011"
+      ],
+      "file": "SOC-DET-028_rundll32.kql"
+    },
+    {
+      "id": "SOC-DET-029",
+      "name": "regsvr32",
+      "display_name": "Suspicious regsvr32 execution",
+      "severity": "high",
+      "mitre": "T1218.010",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1218.010"
+      ],
+      "file": "SOC-DET-029_regsvr32.kql"
+    },
+    {
+      "id": "SOC-DET-030",
+      "name": "wmic",
+      "display_name": "Suspicious WMIC execution",
+      "severity": "medium",
+      "mitre": "T1047",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1047"
+      ],
+      "file": "SOC-DET-030_wmic.kql"
+    },
+    {
+      "id": "SOC-DET-031",
+      "name": "scheduled_task",
+      "display_name": "Suspicious scheduled task creation",
+      "severity": "high",
+      "mitre": "T1053.005",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1053.005"
+      ],
+      "file": "SOC-DET-031_scheduled_task.kql"
+    },
+    {
+      "id": "SOC-DET-032",
+      "name": "service_creation",
+      "display_name": "Suspicious Windows service creation",
+      "severity": "high",
+      "mitre": "T1543.003",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1543.003"
+      ],
+      "file": "SOC-DET-032_service_creation.kql"
+    },
+    {
+      "id": "SOC-DET-033",
+      "name": "startup_persistence",
+      "display_name": "Startup persistence modification",
+      "severity": "high",
+      "mitre": "T1547",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1547"
+      ],
+      "file": "SOC-DET-033_startup_persistence.kql"
+    },
+    {
+      "id": "SOC-DET-034",
+      "name": "firewall_disabled",
+      "display_name": "Firewall disabled",
+      "severity": "high",
+      "mitre": "T1562.004",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1562.004"
+      ],
+      "file": "SOC-DET-034_firewall_disabled.kql"
+    },
+    {
+      "id": "SOC-DET-035",
+      "name": "defender_disabled",
+      "display_name": "Microsoft Defender disabled",
+      "severity": "critical",
+      "mitre": "T1562.001",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1562.001"
+      ],
+      "file": "SOC-DET-035_defender_disabled.kql"
+    },
+    {
+      "id": "SOC-DET-036",
+      "name": "security_log_cleared",
+      "display_name": "Security log cleared",
+      "severity": "high",
+      "mitre": "T1070.001",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1070.001"
+      ],
+      "file": "SOC-DET-036_security_log_cleared.kql"
+    },
+    {
+      "id": "SOC-DET-037",
+      "name": "process_injection",
+      "display_name": "Potential process injection",
+      "severity": "high",
+      "mitre": "T1055",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1055"
+      ],
+      "file": "SOC-DET-037_process_injection.kql"
+    },
+    {
+      "id": "SOC-DET-038",
+      "name": "remote_service",
+      "display_name": "Suspicious remote service activity",
+      "severity": "medium",
+      "mitre": "T1021",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1021"
+      ],
+      "file": "SOC-DET-038_remote_service.kql"
+    },
+    {
+      "id": "SOC-DET-039",
+      "name": "rdp_bruteforce",
+      "display_name": "RDP brute force",
+      "severity": "high",
+      "mitre": "T1110",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1110"
+      ],
+      "file": "SOC-DET-039_rdp_bruteforce.kql"
+    },
+    {
+      "id": "SOC-DET-040",
+      "name": "smb_lateral_movement",
+      "display_name": "SMB lateral movement",
+      "severity": "high",
+      "mitre": "T1021.002",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1021.002"
+      ],
+      "file": "SOC-DET-040_smb_lateral_movement.kql"
+    },
+    {
+      "id": "SOC-DET-041",
+      "name": "azure_resource_change",
+      "display_name": "Unexpected Azure resource change",
+      "severity": "medium",
+      "mitre": "T1098",
+      "tactics": [
+        "Cloud"
+      ],
+      "techniques": [
+        "T1098"
+      ],
+      "file": "SOC-DET-041_azure_resource_change.kql"
+    },
+    {
+      "id": "SOC-DET-042",
+      "name": "storage_public_access",
+      "display_name": "Cloud storage public exposure",
+      "severity": "high",
+      "mitre": "T1530",
+      "tactics": [
+        "Cloud"
+      ],
+      "techniques": [
+        "T1530"
+      ],
+      "file": "SOC-DET-042_storage_public_access.kql"
+    },
+    {
+      "id": "SOC-DET-043",
+      "name": "service_principal",
+      "display_name": "Suspicious service principal activity",
+      "severity": "high",
+      "mitre": "T1098",
+      "tactics": [
+        "Cloud"
+      ],
+      "techniques": [
+        "T1098"
+      ],
+      "file": "SOC-DET-043_service_principal.kql"
+    },
+    {
+      "id": "SOC-DET-044",
+      "name": "conditional_access_change",
+      "display_name": "Conditional Access policy changed",
+      "severity": "high",
+      "mitre": "T1098",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1098"
+      ],
+      "file": "SOC-DET-044_conditional_access_change.kql"
+    },
+    {
+      "id": "SOC-DET-045",
+      "name": "mfa_method_added",
+      "display_name": "New MFA method registered",
+      "severity": "high",
+      "mitre": "T1098",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1098"
+      ],
+      "file": "SOC-DET-045_mfa_method_added.kql"
+    },
+    {
+      "id": "SOC-DET-046",
+      "name": "application_consent",
+      "display_name": "Suspicious application consent",
+      "severity": "high",
+      "mitre": "T1098.003",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1098.003"
+      ],
+      "file": "SOC-DET-046_application_consent.kql"
+    },
+    {
+      "id": "SOC-DET-047",
+      "name": "oauth_application",
+      "display_name": "Suspicious OAuth application",
+      "severity": "high",
+      "mitre": "T1528",
+      "tactics": [
+        "Identity"
+      ],
+      "techniques": [
+        "T1528"
+      ],
+      "file": "SOC-DET-047_oauth_application.kql"
+    },
+    {
+      "id": "SOC-DET-048",
+      "name": "anonymous_access",
+      "display_name": "Anonymous cloud access",
+      "severity": "high",
+      "mitre": "T1078",
+      "tactics": [
+        "Cloud"
+      ],
+      "techniques": [
+        "T1078"
+      ],
+      "file": "SOC-DET-048_anonymous_access.kql"
+    },
+    {
+      "id": "SOC-DET-049",
+      "name": "data_exfiltration",
+      "display_name": "Potential data exfiltration",
+      "severity": "high",
+      "mitre": "T1041",
+      "tactics": [
+        "Network"
+      ],
+      "techniques": [
+        "T1041"
+      ],
+      "file": "SOC-DET-049_data_exfiltration.kql"
+    },
+    {
+      "id": "SOC-DET-050",
+      "name": "archive_collected",
+      "display_name": "Suspicious archive collection",
+      "severity": "medium",
+      "mitre": "T1560",
+      "tactics": [
+        "Endpoint"
+      ],
+      "techniques": [
+        "T1560"
+      ],
+      "file": "SOC-DET-050_archive_collected.kql"
+    }
+  ]
+}
