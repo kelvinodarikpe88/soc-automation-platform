@@ -1,11 +1,31 @@
-
-# Local connector helper
-connectors/enable_connectors.py
-
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+*-key.json
+service-account*.json
+sa-key.json
+chronicle-sa.json
+
+# Azure / credentials
+azure-credentials.json
+credentials.json
 
 # macOS
 .DS_Store
+
+# Generated evidence
+evidence/*.tmp
+
+# IDE
+.vscode/
+.idea/

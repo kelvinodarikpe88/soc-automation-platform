@@ -1,0 +1,89 @@
+name: Deploy Detections + Evidence
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "rules/**"
+      - "chronicle/**"
+      - "deploy/**"
+      - "scripts/**"
+
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Validate Python modules
+        run: |
+          python -m py_compile automation/graph_actions.py
+          python -m py_compile scripts/evidence_report.py
+          python -m py_compile chronicle/deploy_yaral.py
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -q
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Sentinel rules
+        run: |
+          if [ -f deploy/deploy_analytics_rules.py ]; then
+            python3 deploy/deploy_analytics_rules.py \
+              --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+              --resource-group rg-soc-lab \
+              --workspace law-soc
+          else
+            echo "Deployment script not present yet."
+          fi
+
+      - name: Build evidence
+        run: |
+          mkdir -p evidence
+
+          if [ -f rules/manifest.json ]; then
+            python3 scripts/evidence_report.py \
+              --rules rules/manifest.json \
+              --out evidence/controls.json
+          else
+            echo "rules/manifest.json not present yet."
+          fi
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-bundle
+          path: evidence/

@@ -1,0 +1,92 @@
+{
+  "generated": "2026-08-05T15:18:05.154703+00:00",
+  "total_rules": 50,
+  "controls": {
+    "soc2:CC6.1": {
+      "rule_count": 2,
+      "rules": [
+        "SOC-DET-005_guest_added",
+        "SOC-DET-006_admin_added"
+      ],
+      "status": "COVERED"
+    },
+    "soc2:CC7.2": {
+      "rule_count": 13,
+      "rules": [
+        "SOC-DET-001_impossible_travel",
+        "SOC-DET-002_bruteforce",
+        "SOC-DET-003_password_spray",
+        "SOC-DET-004_risky_signin",
+        "SOC-DET-009_bulk_download",
+        "SOC-DET-010_external_sharing",
+        "SOC-DET-011_token_replay",
+        "SOC-DET-012_credential_stuffing",
+        "SOC-DET-017_dns_tunneling",
+        "SOC-DET-018_beacon",
+        "SOC-DET-019_port_scan",
+        "SOC-DET-021_crypto",
+        "SOC-DET-039_rdp_bruteforce"
+      ],
+      "status": "COVERED"
+    },
+    "soc2:CC7.3": {
+      "rule_count": 4,
+      "rules": [
+        "SOC-DET-007_account_reenabled",
+        "SOC-DET-008_mailbox_forwarding",
+        "SOC-DET-022_asr",
+        "SOC-DET-023_tamper"
+      ],
+      "status": "COVERED"
+    },
+    "soc2:CC7.5": {
+      "rule_count": 2,
+      "rules": [
+        "SOC-DET-015_known_exploited",
+        "SOC-DET-016_vulnerability"
+      ],
+      "status": "COVERED"
+    },
+    "iso27001:A.8.8": {
+      "rule_count": 1,
+      "rules": [
+        "SOC-DET-015_known_exploited"
+      ],
+      "status": "COVERED"
+    },
+    "iso27001:A.8.16": {
+      "rule_count": 6,
+      "rules": [
+        "SOC-DET-001_impossible_travel",
+        "SOC-DET-002_bruteforce",
+        "SOC-DET-009_bulk_download",
+        "SOC-DET-018_beacon",
+        "SOC-DET-019_port_scan",
+        "SOC-DET-039_rdp_bruteforce"
+      ],
+      "status": "COVERED"
+    },
+    "iso27001:A.8.23": {
+      "rule_count": 2,
+      "rules": [
+        "SOC-DET-017_dns_tunneling",
+        "SOC-DET-020_traffic_to_threat_intel"
+      ],
+      "status": "COVERED"
+    },
+    "nis2:21(2)": {
+      "rule_count": 7,
+      "rules": [
+        "SOC-DET-001_impossible_travel",
+        "SOC-DET-002_bruteforce",
+        "SOC-DET-013_root_account",
+        "SOC-DET-014_iam_escalation",
+        "SOC-DET-021_crypto",
+        "SOC-DET-023_tamper",
+        "SOC-DET-039_rdp_bruteforce"
+      ],
+      "status": "COVERED"
+    }
+  },
+  "gaps": []
+}

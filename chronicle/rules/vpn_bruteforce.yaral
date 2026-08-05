@@ -1,0 +1,20 @@
+rule vpn_bruteforce {
+  meta:
+    author = "Kelvin Odarikpe"
+    description = ">20 failed VPN auth attempts from one IP"
+    severity = "MEDIUM"
+    mitre_attack_technique = "T1110"
+
+  events:
+    $e.metadata.event_type = "NETWORK_HTTP" or
+    $e.metadata.event_type = "USER_LOGIN"
+    $e.metadata.product_name = "PAN-OS"
+    $e.security_result.action = "BLOCK"
+    $e.principal.ip = $ip
+
+  match:
+    $ip over 15m
+
+  condition:
+    #e > 20
+}

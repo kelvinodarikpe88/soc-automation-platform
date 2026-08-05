@@ -1,0 +1,28 @@
+rule okta_impossible_travel {
+  meta:
+    author = "Kelvin Odarikpe"
+    description = "Success logins from 2 countries within 1h"
+    severity = "HIGH"
+    mitre_attack_technique = "T1078"
+
+  events:
+    $a.metadata.event_type = "USER_LOGIN"
+    $a.metadata.product_name = "Okta"
+    $a.security_result.action = "ALLOW"
+    $a.principal.user.userid = $user
+    $a.principal.location.country_or_region = $c1
+
+    $b.metadata.event_type = "USER_LOGIN"
+    $b.metadata.product_name = "Okta"
+    $b.security_result.action = "ALLOW"
+    $b.principal.user.userid = $user
+    $b.principal.location.country_or_region = $c2
+
+    $c1 != $c2
+
+  match:
+    $user over 1h
+
+  condition:
+    $a and $b
+}
